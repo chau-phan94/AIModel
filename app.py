@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_community.llms import Ollama
-from langchain_community.embeddings import NomicEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
@@ -25,7 +25,7 @@ def get_llm():
 # Initialize the embeddings
 @st.cache_resource
 def get_embeddings():
-    return NomicEmbeddings()
+    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
 # Initialize the vector store
 @st.cache_resource
@@ -49,7 +49,7 @@ st.title("🤖 DeepSeek RAG Agent")
 st.markdown("""
 This is a local RAG (Retrieval-Augmented Generation) agent powered by:
 - DeepSeek R1 (7B) model via Ollama
-- NOMIC embeddings
+- HuggingFace embeddings
 - ChromaDB for vector storage
 """)
 
@@ -107,7 +107,7 @@ with st.sidebar:
     st.markdown("""
     This RAG agent uses:
     - DeepSeek R1 (7B) model for reasoning
-    - NOMIC embeddings for semantic search
+    - HuggingFace embeddings for semantic search
     - ChromaDB for vector storage
     - Streamlit for the interface
     

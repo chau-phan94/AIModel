@@ -1,6 +1,7 @@
 streamlit==1.32.0
 langchain==0.1.12
 langchain-community>=0.0.28
+sentence-transformers==2.5.1
 nomic==3.0.12
 chromadb==0.4.24
 python-dotenv==1.0.1
