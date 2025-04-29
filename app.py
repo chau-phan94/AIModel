@@ -110,11 +110,16 @@ with st.sidebar:
             options=tag_models,
             key="tag_source_model"
         )
-        new_tag = st.text_input("Enter new tag (e.g., llama2:custom)")
+        new_tag = st.text_input("Enter new tag (e.g., llama2:custom)", key="new_tag_input")
         if st.button("Tag Model"):
             result = OllamaManager.tag_model(source_model, new_tag)
             if result == 0:
                 st.success(f"Model '{source_model}' tagged as '{new_tag}'")
+                # Refresh the model list and set the dropdown to the new tag
+                tag_models = OllamaManager.get_local_models()
+                st.write("DEBUG: Updated models after tagging:", tag_models)
+                st.session_state.tag_source_model = new_tag
+                st.experimental_rerun()
             else:
                 st.error(f"Failed to tag model '{source_model}'.")
     else:
@@ -172,7 +177,8 @@ uploaded_file = st.file_uploader("Upload a document to add to the knowledge base
 
 if uploaded_file is not None:
     # Process the uploaded file
-    text = uploaded_file.read().decode()
+    # Robustly decode the uploaded file to avoid UnicodeDecodeError
+    text = uploaded_file.read().decode("utf-8", errors="replace")
     
     # Split text into chunks
     text_splitter = RecursiveCharacterTextSplitter(
