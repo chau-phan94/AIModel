@@ -39,7 +39,6 @@ if "local_models" not in st.session_state:
     st.session_state.local_models = get_local_models()
 
 # Initialize the LLM
-@st.cache_resource
 def get_llm(model_name):
     from langchain_community.llms import Ollama
     return Ollama(model=model_name)
@@ -56,7 +55,6 @@ def get_vector_store():
     return Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
 
 # Create the RAG chain
-@st.cache_resource
 def get_rag_chain(model_name):
     llm = get_llm(model_name)
     vector_store = get_vector_store()
@@ -196,6 +194,13 @@ if uploaded_file is not None:
 
 # Chat interface
 st.subheader("Chat with the RAG Agent")
+
+# Show the currently selected model
+selected_model = st.session_state.get("selected_model", None)
+if selected_model:
+    st.info(f"**Current Model:** {selected_model}")
+else:
+    st.warning("No model selected. Please select a model from the sidebar.")
 
 # Display chat history
 for message in st.session_state.chat_history:
