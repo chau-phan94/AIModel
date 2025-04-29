@@ -86,7 +86,7 @@ with st.sidebar:
     st.subheader("Select Local Model")
     from models.ollama_manager import OllamaManager
     local_models = OllamaManager.get_local_models()
-    st.write("DEBUG: Local models detected:", local_models)
+    
     if local_models:
         selected_model = st.selectbox(
             "Choose a local model",
@@ -101,7 +101,7 @@ with st.sidebar:
     st.subheader("Tag a Model")
     from models.ollama_manager import OllamaManager
     tag_models = OllamaManager.get_local_models()
-    st.write("DEBUG: Local models for tagging:", tag_models)
+    
     if tag_models:
         source_model = st.selectbox(
             "Select source model to tag",
@@ -113,11 +113,9 @@ with st.sidebar:
             result = OllamaManager.tag_model(source_model, new_tag)
             if result == 0:
                 st.success(f"Model '{source_model}' tagged as '{new_tag}'")
-                # Refresh the model list and set the dropdown to the new tag
+                # Refresh the model list
                 tag_models = OllamaManager.get_local_models()
-                st.write("DEBUG: Updated models after tagging:", tag_models)
-                st.session_state.tag_source_model = new_tag
-                st.experimental_rerun()
+                st.rerun()
             else:
                 st.error(f"Failed to tag model '{source_model}'.")
     else:
@@ -198,7 +196,9 @@ st.subheader("Chat with the RAG Agent")
 # Show the currently selected model
 selected_model = st.session_state.get("selected_model", None)
 if selected_model:
-    st.info(f"**Current Model:** {selected_model}")
+    # Make model name more readable (capitalize and replace dashes/underscores with spaces)
+    readable_model = selected_model.replace('-', ' ').replace('_', ' ').title()
+    st.info(f"**Current Model:** {readable_model}")
 else:
     st.warning("No model selected. Please select a model from the sidebar.")
 
