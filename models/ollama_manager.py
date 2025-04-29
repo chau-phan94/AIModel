@@ -9,14 +9,23 @@ class OllamaManager:
     def get_local_models():
         try:
             result = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+            print("DEBUG RAW OLLAMA OUTPUT:")
+            print(result.stdout)
             models = []
             for line in result.stdout.strip().splitlines():
+                print(f"DEBUG SPLIT LINE: '{line}'")
                 # Skip header and empty lines
-                if line.startswith("NAME") or line.strip() == "":
+                if line.strip().startswith("NAME") or line.strip() == "":
                     continue
-                # The first column is the model name (possibly with :tag)
+                # Only consider lines that look like model entries (contain a colon)
+                line = line.strip()
+                if ':' not in line:
+                    continue
+                # Use split to get the first column (model name)
                 model_name = line.split()[0]
+                print(f"DEBUG PARSED MODEL: '{model_name}'")
                 models.append(model_name)
+            print(f"DEBUG MODELS: {models}")
             return models
         except Exception as e:
             print(f"Error getting local models: {e}")

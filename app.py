@@ -86,35 +86,39 @@ with st.sidebar:
     
     # Model selection from local models
     st.subheader("Select Local Model")
-    local_models = get_local_models()
+    from models.ollama_manager import OllamaManager
+    local_models = OllamaManager.get_local_models()
+    st.write("DEBUG: Local models detected:", local_models)
     if local_models:
         selected_model = st.selectbox(
             "Choose a local model",
             options=local_models,
-            index=local_models.index(st.session_state.selected_model) if st.session_state.selected_model in local_models else 0,
-            help="Select a model you have already pulled with Ollama",
             key="select_local_model"
         )
-        if selected_model != st.session_state.selected_model:
-            st.session_state.selected_model = selected_model
-            st.session_state.chat_history = []
+        st.session_state.selected_model = selected_model
     else:
         st.warning("No local models found. Please pull a model using Ollama CLI or the button below.")
     
-    # Model tagging (renaming)
-    st.subheader("Tag (Rename) a Model")
-    with st.form("tag_model_form"):
-        source_model = st.selectbox("Source model", options=get_local_models(), key="tag_source_model")
-        new_tag = st.text_input("New tag name (no spaces)")
-        tag_submitted = st.form_submit_button("Tag Model")
-        if tag_submitted and new_tag:
-            cmd = f"ollama copy {source_model} {new_tag}"
-            result = os.system(cmd)
+    # Tag a model section
+    st.subheader("Tag a Model")
+    from models.ollama_manager import OllamaManager
+    tag_models = OllamaManager.get_local_models()
+    st.write("DEBUG: Local models for tagging:", tag_models)
+    if tag_models:
+        source_model = st.selectbox(
+            "Select source model to tag",
+            options=tag_models,
+            key="tag_source_model"
+        )
+        new_tag = st.text_input("Enter new tag (e.g., llama2:custom)")
+        if st.button("Tag Model"):
+            result = OllamaManager.tag_model(source_model, new_tag)
             if result == 0:
-                st.success(f"Tagged {source_model} as {new_tag}")
-                st.session_state.local_models = get_local_models()
+                st.success(f"Model '{source_model}' tagged as '{new_tag}'")
             else:
-                st.error("Failed to tag model. Make sure the name is valid and not already used.")
+                st.error(f"Failed to tag model '{source_model}'.")
+    else:
+        st.warning("No local models available to tag.")
     
     # Pull model with dropdown
     st.subheader("Pull a Model")
