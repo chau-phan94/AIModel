@@ -1,11 +1,11 @@
 import streamlit as st
-from langchain_community.llms import Ollama
-from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain.chains import RetrievalQA
+from models.ollama_manager import OllamaManager
+from services.embedding_service import EmbeddingService
+from services.chat_service import ChatService
 import os
-import subprocess
 import json
 
 # Popular models for easy selection
@@ -28,18 +28,7 @@ st.set_page_config(
 # Helper to get local models from Ollama
 @st.cache_data(show_spinner=False)
 def get_local_models():
-    try:
-        result = subprocess.run(["ollama", "list", "--json"], capture_output=True, text=True)
-        models = []
-        for line in result.stdout.strip().splitlines():
-            try:
-                model_info = json.loads(line)
-                models.append(model_info["name"])
-            except Exception:
-                continue
-        return models
-    except Exception:
-        return []
+    return OllamaManager.get_local_models()
 
 # Initialize session state
 if "chat_history" not in st.session_state:
@@ -52,12 +41,13 @@ if "local_models" not in st.session_state:
 # Initialize the LLM
 @st.cache_resource
 def get_llm(model_name):
+    from langchain_community.llms import Ollama
     return Ollama(model=model_name)
 
 # Initialize the embeddings
 @st.cache_resource
 def get_embeddings():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return EmbeddingService.get_embeddings()
 
 # Initialize the vector store
 @st.cache_resource
@@ -96,11 +86,12 @@ with st.sidebar:
     
     # Model selection from local models
     st.subheader("Select Local Model")
-    if st.session_state.local_models:
+    local_models = get_local_models()
+    if local_models:
         selected_model = st.selectbox(
             "Choose a local model",
-            options=st.session_state.local_models,
-            index=st.session_state.local_models.index(st.session_state.selected_model) if st.session_state.selected_model in st.session_state.local_models else 0,
+            options=local_models,
+            index=local_models.index(st.session_state.selected_model) if st.session_state.selected_model in local_models else 0,
             help="Select a model you have already pulled with Ollama",
             key="select_local_model"
         )
@@ -113,7 +104,7 @@ with st.sidebar:
     # Model tagging (renaming)
     st.subheader("Tag (Rename) a Model")
     with st.form("tag_model_form"):
-        source_model = st.selectbox("Source model", options=st.session_state.local_models, key="tag_source_model")
+        source_model = st.selectbox("Source model", options=get_local_models(), key="tag_source_model")
         new_tag = st.text_input("New tag name (no spaces)")
         tag_submitted = st.form_submit_button("Tag Model")
         if tag_submitted and new_tag:
@@ -139,7 +130,18 @@ with st.sidebar:
             result = os.system(f"ollama pull {model_to_pull}")
             if result == 0:
                 st.success(f"Successfully pulled {model_to_pull}")
+                # Ask user for destination directory to save the model
+                destination_path = st.text_input("Enter destination folder to save the model (optional)", key="save_model_dest")
+                if destination_path:
+                    from models.ollama_manager import OllamaManager
+                    save_result = OllamaManager.save_model(model_to_pull, destination_path)
+                    if save_result:
+                        st.success(f"Model '{model_to_pull}' saved to {destination_path}")
+                    else:
+                        st.error(f"Failed to save model '{model_to_pull}' to {destination_path}. Please check the path and permissions.")
+                get_local_models.clear()  # Clear the cache so new models are detected
                 st.session_state.local_models = get_local_models()
+                st.rerun()
             else:
                 st.error(f"Error pulling model: {model_to_pull}")
     
