@@ -1,0 +1,45 @@
+# Ignore Python virtual environment
+venv/
+.venv/
+
+# Ignore model storage directories (adjust if you use a different path)
+models/
+*.bin
+*.pt
+*.ckpt
+*.h5
+*.onnx
+*.pb
+*.dylib
+*.pkl
+*.joblib
+*.npz
+*.npy
+
+# Ignore ChromaDB and other vector DB folders
+chroma/
+chroma_db/
+
+# Ignore Streamlit and Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore large files
+*.log
+*.tmp
+
+# Ignore user uploads (if any)
+uploads/
+
+# Uncomment and adjust the following if your models are stored elsewhere
+# ollama_models/
+# storage/
