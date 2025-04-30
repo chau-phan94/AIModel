@@ -190,6 +190,43 @@ if uploaded_file is not None:
     
     st.success("Document processed and added to knowledge base!")
 
+# Website reader UI
+st.subheader("Read Website Content")
+with st.expander("Extract text from a website", expanded=False):
+    url = st.text_input("Enter website URL", key="website_url_input")
+    if st.button("Extract Website Text", key="extract_website_text_btn"):
+        if url:
+            with st.spinner(f"Extracting content from {url}..."):
+                try:
+                    from services.web_reader_service import fetch_website_text
+                    website_text = fetch_website_text(url)
+                    preview = website_text[:1000] + ("..." if len(website_text) > 1000 else "")
+                    st.success("Website content extracted!")
+                    st.text_area("Website Text Preview", preview, height=300)
+                    if 'website_text_full' not in st.session_state:
+                        st.session_state['website_text_full'] = website_text
+                    else:
+                        st.session_state['website_text_full'] = website_text
+                except Exception as e:
+                    st.error(f"Failed to extract website content: {e}")
+        else:
+            st.warning("Please enter a website URL.")
+
+    # Offer to save extracted text to knowledge base
+    if st.session_state.get('website_text_full'):
+        if st.button("Save to Knowledge Base", key="save_website_text_btn"):
+            with st.spinner("Processing and saving website content..."):
+                from langchain.text_splitter import RecursiveCharacterTextSplitter
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000,
+                    chunk_overlap=200
+                )
+                chunks = text_splitter.split_text(st.session_state['website_text_full'])
+                embeddings = get_embeddings()
+                vector_store = get_vector_store()
+                vector_store.add_texts(chunks)
+                st.success("Website content processed and added to knowledge base!")
+
 # Chat interface
 st.subheader("Chat with the RAG Agent")
 
