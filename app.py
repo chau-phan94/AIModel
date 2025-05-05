@@ -227,6 +227,25 @@ with st.expander("Extract text from a website", expanded=False):
                 vector_store.add_texts(chunks)
                 st.success("Website content processed and added to knowledge base!")
 
+# Draw/Write Text Prompt UI
+st.subheader("Write or Paste a Text Prompt")
+with st.expander("Add custom text to knowledge base", expanded=False):
+    custom_text = st.text_area("Enter your text here", key="custom_text_input", height=200)
+    if custom_text:
+        st.text_area("Preview", custom_text[:1000] + ("..." if len(custom_text) > 1000 else ""), height=150, key="custom_text_preview")
+        if st.button("Save Text to Knowledge Base", key="save_custom_text_btn"):
+            with st.spinner("Processing and saving your text..."):
+                from langchain.text_splitter import RecursiveCharacterTextSplitter
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000,
+                    chunk_overlap=200
+                )
+                chunks = text_splitter.split_text(custom_text)
+                embeddings = get_embeddings()
+                vector_store = get_vector_store()
+                vector_store.add_texts(chunks)
+                st.success("Your text has been added to the knowledge base!")
+
 # Chat interface
 st.subheader("Chat with the RAG Agent")
 
